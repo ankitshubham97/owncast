@@ -34,6 +34,9 @@ type MetadataPage struct {
 
 // IndexHandler handles the default index route.
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
+	// w.WriteHeader(http.StatusOK)
+	// w.Write([]byte("OK"))
+	// return
 	middleware.EnableCors(w)
 
 	// Treat recordings and schedule as index requests

@@ -1,5 +1,7 @@
 import { h, Component } from '/js/web_modules/preact.js';
 import htm from '/js/web_modules/htm.js';
+import { useState, useEffect, useRef } from '/js/web_modules/preact/hooks.js';
+
 const html = htm.bind(h);
 
 import { URL_WEBSOCKET } from './utils/constants.js';
@@ -10,6 +12,7 @@ import VideoPoster from './components/video-poster.js';
 import Followers from './components/federation/followers.js';
 import Chat from './components/chat/chat.js';
 import { ChatMenu } from './components/chat/chat-menu.js';
+import { ConnectWallet } from './components/connect-wallet.js';
 import Websocket, {
   CALLBACKS,
   SOCKET_MESSAGE_TYPES,
@@ -77,6 +80,11 @@ export default class App extends Component {
     this.windowBlurred = false;
 
     this.state = {
+      nonce: "abc",
+      signature: null,
+      walletPublicAddress: null,
+      error: null,
+      accessToken: null,
       websocket: null,
       canChat: false, // all of chat functionality (panel + username)
       displayChatPanel: chatStorage === null ? true : chatStorage === 'true', // just the chat panel
@@ -169,6 +177,13 @@ export default class App extends Component {
     this.setupChatAuth = this.setupChatAuth.bind(this);
     this.disableChat = this.disableChat.bind(this);
     this.socketHostOverride = null;
+
+    this.setNonce = this.setNonce.bind(this);
+    this.setSignature = this.setSignature.bind(this);
+    this.setWalletPublicAddress = this.setWalletPublicAddress.bind(this);
+    this.setError = this.setError.bind(this);
+    this.setAccessToken = this.setAccessToken.bind(this);
+
   }
 
   componentDidMount() {
@@ -439,6 +454,34 @@ export default class App extends Component {
     this.setState({
       streamStatusMessage: `${MESSAGE_ONLINE} ${streamDurationString}`,
     });
+  }
+
+  setNonce(nonce) {
+    this.setState({
+      nonce,
+    });
+  }
+
+  setSignature(signature) {
+    this.setState({
+      signature,
+    });
+  }
+
+  setWalletPublicAddress(address) {
+    this.setState({
+      address,
+    });
+  }
+
+  setError(error) {
+    this.setState({
+      error,
+    });
+  }
+
+  setAccessToken(accessToken) {
+    this.accessToken = accessToken;
   }
 
   handleUsernameChange(newName) {
@@ -739,6 +782,10 @@ export default class App extends Component {
 
   render(props, state) {
     const {
+      nonce,
+      signature,
+      walletPublicAddress,
+      error,
       accessToken,
       chatInputEnabled,
       configData,
@@ -998,6 +1045,14 @@ export default class App extends Component {
                 >${streamOnline && streamTitle ? streamTitle : name}</span
               >
             </h1>
+            <${ConnectWallet}
+              nonce=${nonce}
+              setNonce=${this.setNonce}
+              setSignature=${this.setSignature}
+              setWalletPublicAddress=${this.setWalletPublicAddress}
+              error=${error}
+              setError=${this.setError}
+            />
 
             <${!chatDisabled && ChatMenu}
               username=${username}

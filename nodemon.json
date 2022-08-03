@@ -1,0 +1,5 @@
+{
+  "watch": ["*.*"],
+  "ext": "go,json,js",
+  "exec": "go run main.go"
+}

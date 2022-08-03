@@ -67,42 +67,7 @@ export const ChatMenu = (props) => {
       </span>
        <${CaretDownIcon} className="w-8 h-8"/>
       </button>
-      ${
-        chatMenuOpen &&
-        html` <div
-          class="chat-menu-popout shadow-2xl text-gray-100 absolute w-max top-full right-0 z-50 rounded-md p-2 bg-gray-900 fadeIn "
-          style=${{ minWidth: '20rem' }}
-        >
-          ${view === 'main' &&
-          html`<ul class="chat-menu-options w-max">
-            <li>
-              <${UsernameForm}
-                username=${username}
-                isModerator=${isModerator}
-                onUsernameChange=${onUsernameChange}
-                onFocus=${onFocus}
-                onBlur=${onBlur}
-              />
-            </li>
-            ${authMenuItem}
-            <li>
-              <button
-                type="button"
-                id="chat-toggle"
-                onClick=${handleChatPanelToggle}
-                style=${{
-                  display: chatDisabled || noVideoContent ? 'none' : 'flex',
-                }}
-              >
-                <span>Toggle Chat</span>
-                <span><${ChatIcon} /></span>
-              </button>
-            </li>
-          </ul>`}
-          ${view != 'main' &&
-          html`<${SubMenuView} view=${view} setView=${setView} />`}
-        </div>`
-      }
+
     </div>
   </${Context.Provider}>`;
 };
