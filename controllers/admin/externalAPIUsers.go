@@ -35,7 +35,7 @@ func CreateExternalAPIUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := utils.GenerateAccessToken()
+	token, err := utils.GenerateRandomAccessToken()
 	if err != nil {
 		controllers.InternalErrorHandler(w, err)
 		return

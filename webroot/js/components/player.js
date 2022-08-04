@@ -30,6 +30,7 @@ const VIDEO_OPTIONS = {
       experimentalBufferBasedABR: true,
       useNetworkInformationApi: true,
       maxPlaylistRetries: 30,
+      withCredentials: true
     },
   },
   liveTracker: {

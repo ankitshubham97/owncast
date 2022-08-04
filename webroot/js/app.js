@@ -1,8 +1,8 @@
 import { h, Component } from '/js/web_modules/preact.js';
 import htm from '/js/web_modules/htm.js';
-const html = htm.bind(h);
+import { ethers } from '/js/web_modules/ethers/ethers.min.js';
 
-import { URL_WEBSOCKET } from './utils/constants.js';
+const html = htm.bind(h);
 
 import { OwncastPlayer } from './components/player.js';
 import SocialIconsList from './components/platform-logos-list.js';
@@ -10,6 +10,7 @@ import VideoPoster from './components/video-poster.js';
 import Followers from './components/federation/followers.js';
 import Chat from './components/chat/chat.js';
 import { ChatMenu } from './components/chat/chat-menu.js';
+import { ConnectWallet } from './components/connect-wallet.js';
 import Websocket, {
   CALLBACKS,
   SOCKET_MESSAGE_TYPES,
@@ -49,6 +50,9 @@ import {
   KEY_ACCESS_TOKEN,
   KEY_CHAT_DISPLAYED,
   KEY_USERNAME,
+  KEY_NONCE,
+  KEY_SIGNATURE,
+  KEY_WALLET_PUBLIC_ADDRESS,
   MESSAGE_OFFLINE,
   MESSAGE_ONLINE,
   ORIENTATION_PORTRAIT,
@@ -61,6 +65,7 @@ import {
   URL_OWNCAST,
   URL_STATUS,
   URL_VIEWER_PING,
+  URL_WEBSOCKET,
   WIDTH_SINGLE_COL,
   USER_VISIT_COUNT_KEY,
 } from './utils/constants.js';
@@ -77,6 +82,11 @@ export default class App extends Component {
     this.windowBlurred = false;
 
     this.state = {
+      nonce: "abc",
+      signature: null,
+      walletPublicAddress: null,
+      error: null,
+      accessToken: null,
       websocket: null,
       canChat: false, // all of chat functionality (panel + username)
       displayChatPanel: chatStorage === null ? true : chatStorage === 'true', // just the chat panel
@@ -117,6 +127,8 @@ export default class App extends Component {
       // routing & tabbing
       section: '',
       sectionId: '',
+
+      isNftAuthenticated: false,
     };
 
     // timers
@@ -166,9 +178,18 @@ export default class App extends Component {
 
     // chat
     this.hasConfiguredChat = false;
+    this.signMessage = this.signMessage.bind(this);
     this.setupChatAuth = this.setupChatAuth.bind(this);
     this.disableChat = this.disableChat.bind(this);
     this.socketHostOverride = null;
+
+    this.setNonce = this.setNonce.bind(this);
+    this.setIsNftAuthenticated = this.setIsNftAuthenticated.bind(this);
+    this.setSignature = this.setSignature.bind(this);
+    this.setWalletPublicAddress = this.setWalletPublicAddress.bind(this);
+    this.setError = this.setError.bind(this);
+    this.setAccessToken = this.setAccessToken.bind(this);
+
   }
 
   componentDidMount() {
@@ -267,10 +288,14 @@ export default class App extends Component {
       });
 
     // Ping the API to let them know we're an active viewer
-    fetch(URL_VIEWER_PING).catch((error) => {
-      this.handleOfflineMode();
-      this.handleNetworkingError(`Viewer PING error: ${error}`);
-    });
+    fetch(URL_VIEWER_PING, {credentials: 'include'})
+      .then((response) => {
+        this.setIsNftAuthenticated(response.headers.get('Nft-Auth') === 'true');
+      })  
+      .catch((error) => {
+        this.handleOfflineMode();
+        this.handleNetworkingError(`Viewer PING error: ${error}`);
+      });
   }
 
   setConfigData(data = {}) {
@@ -439,6 +464,40 @@ export default class App extends Component {
     this.setState({
       streamStatusMessage: `${MESSAGE_ONLINE} ${streamDurationString}`,
     });
+  }
+
+  setIsNftAuthenticated(isNftAuthenticated) {
+    this.setState({
+      isNftAuthenticated,
+    });
+  }
+
+  setNonce(nonce) {
+    this.setState({
+      nonce,
+    });
+  }
+
+  setSignature(signature) {
+    this.setState({
+      signature,
+    });
+  }
+
+  setWalletPublicAddress(walletPublicAddress) {
+    this.setState({
+      walletPublicAddress,
+    });
+  }
+
+  setError(error) {
+    this.setState({
+      error,
+    });
+  }
+
+  setAccessToken(accessToken) {
+    this.accessToken = accessToken;
   }
 
   handleUsernameChange(newName) {
@@ -685,14 +744,54 @@ export default class App extends Component {
     this.setState({ websocket: null, canChat: false });
   }
 
+  async signMessage({ setError, message }) {
+    try {
+      console.log({ message });
+      if (!window.ethereum)
+        throw new Error('No crypto wallet found. Please install it.');
+
+      await window.ethereum.send('eth_requestAccounts');
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const signature = await signer.signMessage(message);
+      const address = await signer.getAddress();
+
+      return {
+        message,
+        signature,
+        address,
+      };
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   async setupChatAuth(force) {
     var accessToken = getLocalStorage(KEY_ACCESS_TOKEN);
     var username = getLocalStorage(KEY_USERNAME);
+    var nonce = getLocalStorage(KEY_NONCE);
+    var signature = getLocalStorage(KEY_SIGNATURE);
+    var walletPublicAddress = getLocalStorage(KEY_WALLET_PUBLIC_ADDRESS);
+    if (!nonce || !signature || !walletPublicAddress) {
+      nonce = "abc";
+      const sig = await this.signMessage({
+        setError: this.setError,
+        message: nonce,
+      });
+      if (sig) {
+        setLocalStorage(KEY_NONCE, sig.message);
+        setLocalStorage(KEY_SIGNATURE, sig.signature);
+        setLocalStorage(KEY_WALLET_PUBLIC_ADDRESS, sig.address);
+        console.log('sig at start', sig);
+      } else {
+        this.setError('No signature');
+      }
+    }
 
     if (!accessToken || force) {
       try {
         this.isRegistering = true;
-        const registration = await registerChat(this.state.username);
+        const registration = await registerChat(username, getLocalStorage(KEY_NONCE), getLocalStorage(KEY_SIGNATURE), getLocalStorage(KEY_WALLET_PUBLIC_ADDRESS), "0x8437ee943b49945a7270109277942defe30fac25", "0");
         accessToken = registration.accessToken;
         username = registration.displayName;
 
@@ -738,8 +837,14 @@ export default class App extends Component {
   }
 
   render(props, state) {
+    console.log('rendering');
     const {
+      nonce,
+      signature,
+      walletPublicAddress,
+      error,
       accessToken,
+      isNftAuthenticated,
       chatInputEnabled,
       configData,
       displayChatPanel,
@@ -785,6 +890,9 @@ export default class App extends Component {
       federation = {},
     } = configData;
 
+    if (nonce && signature && walletPublicAddress) {
+      this.setupChatAuth();
+    }
     const bgUserLogo = { backgroundImage: `url(${logo})` };
 
     const tagList = tags !== null && tags.length > 0 && tags.join(' #');
@@ -997,7 +1105,19 @@ export default class App extends Component {
               <span class="instance-title overflow-hidden truncate"
                 >${streamOnline && streamTitle ? streamTitle : name}</span
               >
+              <span class="ml-2">
+                ${isNftAuthenticated? "🟢" : "🔴"}
+              </span>
+
             </h1>
+            <${ConnectWallet}
+              nonce=${nonce}
+              setNonce=${this.setNonce}
+              setSignature=${this.setSignature}
+              setWalletPublicAddress=${this.setWalletPublicAddress}
+              error=${error}
+              setError=${this.setError}
+            />
 
             <${!chatDisabled && ChatMenu}
               username=${username}
@@ -1013,7 +1133,7 @@ export default class App extends Component {
           </header>
         </div>
 
-        <main class=${mainClass}>
+        <main class=${isNftAuthenticated? "": "hidden"} ${mainClass}>
           <div
             id="video-container"
             class="flex owncast-video-container bg-black w-full bg-center bg-no-repeat flex-col items-center justify-start"
@@ -1047,7 +1167,7 @@ export default class App extends Component {
         >
           ${externalActionButtons && html`${externalActionButtons}`}
 
-          <div class="user-content flex flex-row p-8">
+          <div class="${!isNftAuthenticated? "": "hidden"} user-content flex flex-row p-8">
             <div
               class="user-logo-icons flex flex-col items-center justify-start mr-8"
             >

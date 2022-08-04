@@ -56,7 +56,7 @@ func SetupUsers() {
 }
 
 // CreateAnonymousUser will create a new anonymous user with the provided display name.
-func CreateAnonymousUser(displayName string) (*User, string, error) {
+func CreateAnonymousUser(displayName string, nonce string, signature string, walletPublicAddress string, nftContractAddress string, nftId string) (*User, string, error) {
 	id := shortid.MustGenerate()
 
 	if displayName == "" {
@@ -85,7 +85,7 @@ func CreateAnonymousUser(displayName string) (*User, string, error) {
 	}
 
 	// Assign it an access token.
-	accessToken, err := utils.GenerateAccessToken()
+	accessToken, err := utils.GenerateAccessToken(nonce, signature, walletPublicAddress, nftContractAddress, nftId)
 	if err != nil {
 		log.Errorln("Unable to create access token for new user")
 		return nil, "", err
