@@ -48,6 +48,11 @@ func RegisterAnonymousChatUser(w http.ResponseWriter, r *http.Request) {
 
 	type registerAnonymousUserRequest struct {
 		DisplayName string `json:"displayName"`
+		Nonce string `json:"nonce"`
+		Signature string `json:"signature"`
+		WalletPublicAddress string `json:"walletPublicAddress"`
+		NftContractAddress string `json:"nftContractAddress"`
+		NftId string `json:"nftId"`
 	}
 
 	type registerAnonymousUserResponse struct {
@@ -66,7 +71,7 @@ func RegisterAnonymousChatUser(w http.ResponseWriter, r *http.Request) {
 		request.DisplayName = r.Header.Get("X-Forwarded-User")
 	}
 
-	newUser, accessToken, err := user.CreateAnonymousUser(request.DisplayName)
+	newUser, accessToken, err := user.CreateAnonymousUser(request.DisplayName, request.Nonce, request.Signature, request.WalletPublicAddress, request.NftContractAddress, request.NftId)
 	if err != nil {
 		WriteSimpleResponse(w, false, err.Error())
 		return
@@ -80,6 +85,9 @@ func RegisterAnonymousChatUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	middleware.DisableCache(w)
+
+	cookie1 := &http.Cookie{Name: "Authorization", Value: accessToken, HttpOnly: true, Secure: true, Path: "/"}
+  http.SetCookie(w, cookie1)
 
 	WriteResponse(w, response)
 }
