@@ -1,12 +1,12 @@
 import { URL_CHAT_REGISTRATION } from '../utils/constants.js';
 
-export async function registerChat(username) {
+export async function registerChat(username, nonce, signature, walletPublicAddress, nftContractAddress, nftId) {
   const options = {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ displayName: username }),
+    body: JSON.stringify({ displayName: username, nonce, signature, walletPublicAddress, nftContractAddress, nftId }),
   };
 
   try {
