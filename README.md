@@ -12,7 +12,7 @@
     <br />
     <a href="#"><strong>Project doc @ Devfolio »</strong></a>
     <br />
-    <a href="#">View Demo</a>
+    <a href="https://youtu.be/9-PB62kO-RU">View Demo</a>
     ·
     <a href="https://github.com/owncast/owncast#readme">Owncast README</a>
   </p>
