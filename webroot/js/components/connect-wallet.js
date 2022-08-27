@@ -1,7 +1,15 @@
 import { h, createContext } from '/js/web_modules/preact.js';
 import htm from '/js/web_modules/htm.js';
 import { ethers } from '/js/web_modules/ethers/ethers.min.js';
-
+import { clearLocalStorage } from '../utils/helpers.js';
+import {
+  KEY_ACCESS_TOKEN,
+  KEY_CHAT_DISPLAYED,
+  KEY_USERNAME,
+  KEY_NONCE,
+  KEY_SIGNATURE,
+  KEY_WALLET_PUBLIC_ADDRESS,
+} from '../utils/constants.js';
 const html = htm.bind(h);
 
 const moderatorFlag = html`
@@ -62,15 +70,15 @@ export const ConnectWallet = (props) => {
     }
   };
 
-  // return html`
-  // <${Context.Provider} value=${props}>
-  // <div className="chat-menu p-2 relative shadow-lg">
-  //   <button
-  //     className="btn btn-primary submit-button focus:ring focus:outline-none w-full"
-  //     onClick=${connectWallet}
-  //     >
-  //     Sign message
-  //   </button>
-  // </div>
-  // </${Context.Provider}>`;
+  return html`
+  <${Context.Provider} value=${props}>
+  <div className="chat-menu p-2 relative shadow-lg">
+    <button
+      className="btn btn-secondary submit-button focus:ring focus:outline-none w-full bg-indigo-500 p-2 text-white"
+      onClick=${() => {clearLocalStorage(KEY_ACCESS_TOKEN); clearLocalStorage(KEY_USERNAME); clearLocalStorage(KEY_NONCE); clearLocalStorage(KEY_SIGNATURE); clearLocalStorage(KEY_WALLET_PUBLIC_ADDRESS); location.reload(); document.cookie = 'Authorization=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';}}
+      >
+      Reconnect other wallet
+    </button>
+  </div>
+  </${Context.Provider}>`;
 };
