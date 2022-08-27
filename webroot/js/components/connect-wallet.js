@@ -62,15 +62,15 @@ export const ConnectWallet = (props) => {
     }
   };
 
-  return html`
-  <${Context.Provider} value=${props}>
-  <div className="chat-menu p-2 relative shadow-lg">
-    <button
-      className="btn btn-primary submit-button focus:ring focus:outline-none w-full"
-      onClick=${connectWallet}
-      >
-      Sign message
-    </button>
-  </div>
-  </${Context.Provider}>`;
+  // return html`
+  // <${Context.Provider} value=${props}>
+  // <div className="chat-menu p-2 relative shadow-lg">
+  //   <button
+  //     className="btn btn-primary submit-button focus:ring focus:outline-none w-full"
+  //     onClick=${connectWallet}
+  //     >
+  //     Sign message
+  //   </button>
+  // </div>
+  // </${Context.Provider}>`;
 };
