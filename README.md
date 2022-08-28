@@ -10,7 +10,7 @@
   <p align="center">
     <strong>A decentralized content sharing/streaming platform built for creators so that they could directly monetize their fans!</strong>
     <br />
-    <a href="#"><strong>Project doc @ Devfolio »</strong></a>
+    <a href="https://devfolio.co/projects/fanment-2d4b"><strong>Project doc @ Devfolio »</strong></a>
     <br />
     <a href="https://youtu.be/9-PB62kO-RU">View Demo</a>
     ·
