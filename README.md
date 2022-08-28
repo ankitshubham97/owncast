@@ -23,6 +23,7 @@
 - [About the Project](#about-the-project)
 - [Unfold 2022 Specific](#unfold-2022-specific)
 - [Getting Started](#getting-started)
+- [Technical concepts](#technical-concepts)
 
 <!-- ABOUT THE PROJECT -->
 
@@ -91,3 +92,15 @@ You will need a wallet with the correct NFT in it to test the happy flow. Here i
 1. Seed phrase: loop lobster mechanic grit lecture video they expose marble photo now family
 
 For the unhappy flow, you could just use any metamask wallet!
+
+## Technical concepts
+
+The technical problem is to validate if a wallet holds an NFT.
+
+We use the concept of cryptography. We need a nonce to be signed by the private key of the wallet. This would generate a signature. We can then verify this signature using the nince and the public key of the wallet(i.e. wallet address).
+
+The nonce is randomly generated. To sign this nonce, we use ethers.js library to open the metamask wallet and let the wallet sign this nonce. We send the nonce, signature and the public address to the auth server.
+
+Auth server uses plain cryptography to verify if the signature was indeed created by the wallet signing the nonce. If verification is successful, we proceed to generate an access token. The access token is implemented as JWT. This access token will be passed back to the user so that he could piggy-back this with every request to fetch the content. I have implemented this as cookie; the access token gets passed with the request as cookie.
+
+Now, when a user sends a request to access the content with access-token piggybacked as cookie, Fanment uses auth server to verify the validity of the access-token. If it is valid then only responds with the content payload; otherwise it sends error.
